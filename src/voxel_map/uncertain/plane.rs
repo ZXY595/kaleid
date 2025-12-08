@@ -42,7 +42,7 @@ where
             max_layer: 4,
             plane_init_threshold: 5,
             update_threshold: 5,
-            plane_eigen_threshold: nalgebra::convert(0.01),
+            plane_eigen_threshold: nalgebra::convert(0.1),
             max_points: 50,
         }
     }

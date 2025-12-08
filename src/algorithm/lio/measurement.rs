@@ -32,9 +32,9 @@ where
                 nalgebra::convert(0.1),
                 nalgebra::convert(0.1),
                 nalgebra::convert(0.1),
-                nalgebra::convert(0.01),
-                nalgebra::convert(0.01),
-                nalgebra::convert(0.01),
+                nalgebra::convert(0.1),
+                nalgebra::convert(0.1),
+                nalgebra::convert(0.1),
             ),
             lidar_point: nalgebra::convert(10.0),
         }

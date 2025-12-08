@@ -18,6 +18,18 @@ pub struct ProcessCovConfig<T> {
     pub angular_acc: T,
 }
 
+impl<T: SupersetOf<f64>> Default for ProcessCovConfig<T> {
+    fn default() -> Self {
+        Self {
+            velocity: nalgebra::convert(20.0),
+            linear_acc: nalgebra::convert(500.0),
+            linear_acc_bias: nalgebra::convert(0.0001),
+            angular_acc: nalgebra::convert(1000.0),
+            angular_acc_bias: nalgebra::convert(0.0001),
+        }
+    }
+}
+
 impl<T> StatePredictor<T> for State<T>
 where
     T: RealField,
@@ -88,18 +100,6 @@ where
     #[inline]
     fn predict(&mut self, dt: DeltaTime<T>) {
         self.eskf.predict(dt)
-    }
-}
-
-impl<T: SupersetOf<f64>> Default for ProcessCovConfig<T> {
-    fn default() -> Self {
-        Self {
-            velocity: nalgebra::convert(20.0),
-            linear_acc: nalgebra::convert(500.0),
-            linear_acc_bias: nalgebra::convert(0.01),
-            angular_acc: nalgebra::convert(1000.0),
-            angular_acc_bias: nalgebra::convert(0.01),
-        }
     }
 }
 
