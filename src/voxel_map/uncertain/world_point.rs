@@ -21,24 +21,24 @@ pub struct UncertainPoint<T: Scalar> {
     pub cross_matrix_imu: Matrix3<T>,
 }
 
-impl<T> UncertainWorldPoint<T>
+impl<T> UncertainBodyPoint<T>
 where
     T: RealField,
 {
-    pub fn from_uncertain_body_point<S>(
-        body_point: UncertainBodyPoint<T>,
+    pub fn to_uncertain_world_point<S>(
+        self,
         imu_to_world: &IsometryFramed<T, fn(frames::Imu) -> frames::World>,
         body_to_world: &IsometryFramed<T, fn(frames::Body) -> frames::World>,
         cross_matrix_imu: Framed<&Matrix3<T>, frames::Imu>,
         eskf_cov: &Covariance<S>,
-    ) -> Self
+    ) -> UncertainWorldPoint<T>
     where
         S: KFState<Element = T>,
         RotationState<T>: SubStateOf<S, Dim = U3>,
         PositionState<T>: SubStateOf<S, Dim = U3>,
         DefaultAllocator: Allocator<S::Dim, S::Dim>,
     {
-        let world_point = body_point.deref() * body_to_world;
+        let world_point = self.deref() * body_to_world;
         let rot_cov = eskf_cov.sub_covariance::<RotationState<T>>();
         let pos_cov = eskf_cov.sub_covariance::<PositionState<T>>();
 
@@ -46,7 +46,7 @@ where
         cov.quadform_tr(
             T::one(),
             body_to_world.rotation.matrix(),
-            &body_point.cov,
+            &self.cov,
             T::one(),
         );
         cov.quadform_tr(
@@ -56,6 +56,6 @@ where
             T::one(),
         );
 
-        Self::new_with_cov(world_point, cov)
+        UncertainWorldPoint::new_with_cov(world_point, cov)
     }
 }

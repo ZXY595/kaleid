@@ -152,11 +152,22 @@ where
     }
 }
 
+impl<T: Scalar + ClosedAddAssign> AccWithBiasState<T> {
+    pub fn linear(&self) -> LinearAccState<T> {
+        LinearAccState::new(self.acc.linear.deref() + self.bias.linear.deref())
+    }
+
+    pub fn angular(&self) -> AngularAccState<T> {
+        AngularAccState::new(self.acc.angular.deref() + self.bias.angular.deref())
+    }
+}
+
 impl<S, M> MarkedState<S, M> {
     #[inline]
-    pub fn new(state: S) -> Self {
+    pub const fn new(state: S) -> Self {
         MarkedState(state, PhantomData)
     }
+
     #[inline]
     pub fn map_state_marker<N>(self) -> MarkedState<S, N> {
         MarkedState(self.0, PhantomData)

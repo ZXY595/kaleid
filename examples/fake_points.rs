@@ -25,10 +25,10 @@ fn main() {
         .enumerate()
         .map(|(i, chunk)| StampedPoints::new((i * 96) as f64 * 0.00025, chunk))
         .take(
-            option_env!("STEPS")
+            option_env!("TIMES")
                 .and_then(|s| {
                     s.parse()
-                        .inspect_err(|e| eprintln!("Invalid STEPS: {e}"))
+                        .inspect_err(|e| eprintln!("Invalid TIMES: {e}"))
                         .ok()
                 })
                 .unwrap_or(1000),

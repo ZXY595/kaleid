@@ -22,13 +22,13 @@ impl<T: SupersetOf<f64>> Default for ProcessCov<T> {
     }
 }
 
-impl<T> UncertainBodyPoint<T>
+impl<T> BodyPoint<T>
 where
     T: RealField + ToRadians,
 {
-    pub fn from_body_point(point: BodyPoint<T>, process_cov: ProcessCov<T>) -> Self {
-        let distance = point.coords.norm();
-        let direction = point.coords.normalize();
+    pub fn to_uncertained(self, process_cov: ProcessCov<T>) -> UncertainBodyPoint<T> {
+        let distance = self.coords.norm();
+        let direction = self.coords.normalize();
 
         let base1 = Vector3::new(T::one(), T::one(), {
             -(direction.x.clone() + direction.y.clone())
@@ -51,6 +51,6 @@ where
         cov.quadform_tr(T::one(), &direction, &distance_cov, T::zero());
         cov.quadform_tr(T::one(), &point_base_coords, &direction_cov, T::one());
 
-        Self::new_with_cov(point, cov)
+        UncertainBodyPoint::new_with_cov(self, cov)
     }
 }

@@ -87,15 +87,12 @@ where
             .into_iter()
             .map(LidarPoint::to_body_point)
             .voxel_grid_downsample(&self.downsampler.resolution, &mut self.downsampler.grid)
-            .map(|body_point| {
-                UncertainBodyPoint::from_body_point(body_point, self.body_point_process_cov.clone())
-            })
+            .map(|body_point| body_point.to_uncertained(self.body_point_process_cov.clone()))
             .map(|body_point| {
                 let imu_point = body_point.deref() * body_to_imu;
                 let cross_matrix_imu = Framed::new(imu_point.coords.cross_matrix());
 
-                let world_point = UncertainWorldPoint::from_uncertain_body_point(
-                    body_point.clone(),
+                let world_point = body_point.clone().to_uncertain_world_point(
                     imu_to_world,
                     &body_to_world,
                     cross_matrix_imu.as_ref(),
@@ -124,8 +121,7 @@ where
             // re-compute the world points based on the updated state
             processing_points
                 .map(|(body_point, _, cross_matrix_imu)| {
-                    UncertainWorldPoint::from_uncertain_body_point(
-                        body_point,
+                    body_point.to_uncertain_world_point(
                         self.eskf.pose.deref(),
                         &body_to_world,
                         cross_matrix_imu.as_ref(),

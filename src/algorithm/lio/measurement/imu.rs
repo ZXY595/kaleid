@@ -31,17 +31,11 @@ where
         measure_noise: &AccState<T>,
         imu_acc: &ImuMeasured<T>,
     ) -> ImuObserved<T> {
-        let AccWithBiasState {
-            acc: state_acc,
-            bias: state_acc_bias,
-        } = &self.state.acc_with_bias;
-
-        let measured_linear_acc = imu_acc.linear.deref() * gravity_factor
-            - state_acc.linear.deref()
-            - state_acc_bias.linear.deref();
+        let measured_linear_acc =
+            imu_acc.linear.deref() * gravity_factor - self.state.acc_with_bias.linear().deref();
 
         let measured_angular_acc =
-            imu_acc.angular.deref() - state_acc.angular.deref() - state_acc_bias.angular.deref();
+            imu_acc.angular.deref() - self.state.acc_with_bias.angular().deref();
 
         #[expect(clippy::toplevel_ref_arg)]
         let measurement = stack![measured_linear_acc; measured_angular_acc];

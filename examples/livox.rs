@@ -41,13 +41,11 @@ fn main() -> std::io::Result<()> {
                 let CoordinateDataRef::CartesianHigh(points) = point_cloud.data else {
                     return;
                 };
-                let point_start_timestamp = point_cloud.header.timestamp_sec();
                 let point_end_timestamp = point_cloud.header.end_timestamp_sec();
 
                 let imu_measurments = stream::block_on(
                     imu_stream
                         .drain()
-                        .skip_while(|measurment| measurment.timestamp < point_start_timestamp)
                         .take_while(|measurment| measurment.timestamp < point_end_timestamp),
                 );
                 lio.update_points_with_imus(
