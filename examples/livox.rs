@@ -56,7 +56,7 @@ fn main() -> std::io::Result<()> {
                     imu_measurments,
                 );
                 let pose = lio.get_pose();
-                println!("{pose:?}");
+                println!("{}", pose.translation);
             })
             .for_each(drop)
             .await;
