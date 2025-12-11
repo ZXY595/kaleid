@@ -5,7 +5,10 @@ use nalgebra::{Dyn, Point3, RealField, Scalar, Vector3, stack};
 use crate::{
     algorithm::lio::{downsample::Downsample, state::State},
     eskf::{Eskf, observe::UnbiasedObservation, state::common::PoseState, uncertain::Uncertained},
-    frame::{BodyPoint, CrossMatrixFramed, Framed, IsometryFramed, frames},
+    frame::{
+        BodyPoint, CrossMatrixFramed, Framed, IsometryFramed,
+        frames::{BodyFrame, ImuFrame, WorldFrame},
+    },
     utils::{CollectTo, ToRadians},
     voxel_map::{
         VoxelMap,
@@ -53,17 +56,18 @@ impl<T: Scalar> LidarPoint<T> for BodyPoint<T> {
     }
 }
 
-pub type PointsProcessBuffer<T> = Vec<(
+pub type ProcessingPoints<T> = (
     UncertainBodyPoint<T>,
     UncertainWorldPoint<T>,
-    CrossMatrixFramed<T, frames::Imu>,
-)>;
+    CrossMatrixFramed<T, ImuFrame>,
+);
 
 impl<T> LIO<T>
 where
     T: RealField + ToRadians,
 {
     #[doc(alias = "update_points")]
+    #[inline]
     pub fn update_stamped_points(
         &mut self,
         stamped_points: StampedPoints<T, impl IntoIterator<Item = impl LidarPoint<T>>>,
@@ -146,14 +150,8 @@ where
         &self,
         map: &VoxelMap<T>,
         measure_noise: &T,
-        body_to_world: &IsometryFramed<T, fn(frames::Body) -> frames::World>,
-        points: impl IntoIterator<
-            Item = &'a (
-                UncertainBodyPoint<T>,
-                UncertainWorldPoint<T>,
-                CrossMatrixFramed<T, frames::Imu>,
-            ),
-        >,
+        body_to_world: &IsometryFramed<T, fn(BodyFrame) -> WorldFrame>,
+        points: impl IntoIterator<Item = &'a ProcessingPoints<T>>,
     ) -> Option<PointsObserved<T>> {
         // TODO: could this be optimized by using `rayon`?
         let observation = points

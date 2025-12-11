@@ -1,6 +1,12 @@
 pub(crate) mod marker;
 use crate::{
-    frame::{IsometryFramed, frames},
+    eskf::state::common::marker::{
+        AccBias, AngularAcc, Gravity, GyroBias, LinearAcc, Pose, Position, Rotation, Velocity,
+    },
+    frame::{
+        IsometryFramed,
+        frames::{ImuFrame, WorldFrame},
+    },
     utils::AnyStorageMatrix,
 };
 
@@ -27,18 +33,15 @@ pub struct MarkedState<S, M>(pub S, PhantomData<M>);
 pub type Vector3State<T, S> = MarkedState<Vector3<T>, S>;
 pub type IsometryState<T, F, S> = MarkedState<IsometryFramed<T, F>, S>;
 
-impl<T, S> Unbiased for Vector3State<T, S> {}
-impl<T, F, S> Unbiased for IsometryState<T, F, S> {}
-
-pub type PoseState<T> = IsometryState<T, fn(frames::Imu) -> frames::World, marker::Pose>;
-pub type RotationState<T> = Vector3State<T, marker::Rotation>;
-pub type PositionState<T> = Vector3State<T, marker::Position>;
-pub type VelocityState<T> = Vector3State<T, marker::Velocity>;
-pub type GravityState<T> = Vector3State<T, marker::Gravity>;
-pub type LinearAccState<T> = Vector3State<T, marker::LinearAcc>;
-pub type LinearAccBiasState<T> = Vector3State<T, marker::AccBias>;
-pub type AngularAccState<T> = Vector3State<T, marker::AngularAcc>;
-pub type AngularAccBiasState<T> = Vector3State<T, marker::GyroBias>;
+pub type PoseState<T> = IsometryState<T, fn(ImuFrame) -> WorldFrame, Pose>;
+pub type RotationState<T> = Vector3State<T, Rotation>;
+pub type PositionState<T> = Vector3State<T, Position>;
+pub type VelocityState<T> = Vector3State<T, Velocity>;
+pub type GravityState<T> = Vector3State<T, Gravity>;
+pub type LinearAccState<T> = Vector3State<T, LinearAcc>;
+pub type LinearAccBiasState<T> = Vector3State<T, AccBias>;
+pub type AngularAccState<T> = Vector3State<T, AngularAcc>;
+pub type AngularAccBiasState<T> = Vector3State<T, GyroBias>;
 
 #[derive(KFState, VectorAddAssign)]
 #[element(T)]
@@ -64,6 +67,9 @@ pub struct BiasState<T: Scalar> {
     pub linear: LinearAccBiasState<T>,
     pub angular: AngularAccBiasState<T>,
 }
+
+impl<T, S> Unbiased for Vector3State<T, S> {}
+impl<T, F, S> Unbiased for IsometryState<T, F, S> {}
 
 impl<T: Scalar, M> super::KFState for Vector3State<T, M> {
     type Element = T;

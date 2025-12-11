@@ -3,7 +3,10 @@ use std::ops::Deref;
 use nalgebra::{Matrix3, RealField};
 
 use crate::{
-    frame::{IsometryFramed, frames},
+    frame::{
+        IsometryFramed,
+        frames::{BodyFrame, WorldFrame},
+    },
     voxel_map::uncertain::UncertainWorldPoint,
 };
 
@@ -13,7 +16,7 @@ impl<'a, T: RealField> Residual<'a, T> {
     pub fn to_uncertained(
         self,
         body_point: &UncertainBodyPoint<T>,
-        body_to_world: &IsometryFramed<T, fn(frames::Body) -> frames::World>,
+        body_to_world: &IsometryFramed<T, fn(BodyFrame) -> WorldFrame>,
     ) -> UncertainResidual<'a, T> {
         UncertainResidual::from_body_point_and_plane(self, body_point, body_to_world)
     }
@@ -23,7 +26,7 @@ impl<'a, T: RealField> UncertainResidual<'a, T> {
     pub fn from_body_point_and_plane(
         residual: Residual<'a, T>,
         body_point: &UncertainBodyPoint<T>,
-        body_to_world: &IsometryFramed<T, fn(frames::Body) -> frames::World>,
+        body_to_world: &IsometryFramed<T, fn(BodyFrame) -> WorldFrame>,
     ) -> Self {
         let mut cov = Matrix3::zeros();
         cov.quadform_tr(

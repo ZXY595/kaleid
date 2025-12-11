@@ -5,25 +5,21 @@ use crate::eskf::state::KFState;
 use super::Framed;
 
 #[derive(Debug)]
-pub struct Body;
+pub struct BodyFrame;
 
 #[derive(Debug)]
-pub struct Imu;
+pub struct ImuFrame;
 
 #[derive(Debug)]
-pub struct World;
-
-pub type BodyFramed<T> = Framed<T, Body>;
-pub type ImuFramed<T> = Framed<T, Imu>;
-pub type WorldFramed<T> = Framed<T, World>;
+pub struct WorldFrame;
 
 pub type IsometryFramed<T, F> = Framed<IsometryMatrix3<T>, F>;
 pub type CrossMatrixFramed<T, F> = Framed<Matrix3<T>, F>;
 
 pub type FramedPoint<T, F> = Framed<Point3<T>, F>;
-pub type BodyPoint<T> = BodyFramed<Point3<T>>;
-pub type ImuPoint<T> = ImuFramed<Point3<T>>;
-pub type WorldPoint<T> = WorldFramed<Point3<T>>;
+pub type BodyPoint<T> = Framed<Point3<T>, BodyFrame>;
+pub type ImuPoint<T> = Framed<Point3<T>, ImuFrame>;
+pub type WorldPoint<T> = Framed<Point3<T>, WorldFrame>;
 
 impl<T: Scalar, F> KFState for FramedPoint<T, F> {
     type Element = T;

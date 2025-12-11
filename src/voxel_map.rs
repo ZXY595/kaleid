@@ -10,7 +10,7 @@ use nohash_hasher::IntMap;
 pub use residual::Residual;
 use simba::scalar::SupersetOf;
 
-use crate::frame::frames;
+use crate::frame::frames::WorldFrame;
 
 use index::{ToVoxelIndex, VoxelIndex};
 use oct_tree::OctTreeRoot;
@@ -19,7 +19,7 @@ use uncertain::{
     plane::{Plane, PlaneConfig},
 };
 
-pub type MapIndex<T> = VoxelIndex<T, frames::World>;
+pub type MapIndex<T> = VoxelIndex<T, WorldFrame>;
 
 pub struct VoxelMap<T>
 where

@@ -6,14 +6,14 @@ use std::{
 use nalgebra::ComplexField;
 
 use crate::{
-    frame::{FramedPoint, frames},
+    frame::{FramedPoint, frames::BodyFrame},
     voxel_map::index::{ToVoxelIndex, VoxelIndex},
 };
 
 type GridIndex<T, F> = VoxelIndex<T, F>;
 type VoxelGrid<T, F> = HashMap<GridIndex<T, F>, (usize, FramedPoint<T, F>)>;
 
-pub type ScanDownsampler<T> = Downsampler<T, frames::Body>;
+pub type ScanDownsampler<T> = Downsampler<T, BodyFrame>;
 
 pub struct Downsampler<T: ComplexField, F> {
     pub resolution: T,

@@ -9,7 +9,7 @@ use nalgebra::{ClosedAddAssign, ClosedDivAssign, Scalar, Vector3};
 
 #[derive(Debug)]
 pub struct Framed<T, F> {
-    inner: T,
+    pub inner: T,
     frame: PhantomData<F>,
 }
 
@@ -209,6 +209,8 @@ where
 mod tests {
     use nalgebra::{IsometryMatrix3, Point3, Vector3};
 
+    use crate::frame::frames::{BodyFrame, ImuFrame, WorldFrame};
+
     use super::*;
 
     #[test]
@@ -219,17 +221,17 @@ mod tests {
             Vector3::new(1.0, 1.0, 0.0),
             Vector3::z() * std::f64::consts::PI,
         );
-        let body_2_imu = Framed::new_transform(t1, frames::Body, frames::Imu);
+        let body_2_imu = Framed::new_transform(t1, BodyFrame, ImuFrame);
 
         let t2 = IsometryMatrix3::new(
             Vector3::new(2.0, -1.0, 0.0),
             Vector3::x() * std::f64::consts::PI,
         );
-        let imu_2_world = Framed::new_transform(t2, frames::Imu, frames::World);
+        let imu_2_world = Framed::new_transform(t2, ImuFrame, WorldFrame);
 
         let body_2_world = body_2_imu * imu_2_world;
 
-        let p = Framed::new_with_frame(p, frames::Body) * body_2_world;
+        let p = Framed::new_with_frame(p, BodyFrame) * body_2_world;
 
         let distance = nalgebra::distance(&p, &Point3::new(2.0, -3.0, 0.0));
         assert!(distance < 1e-6, "p: {p:?}");

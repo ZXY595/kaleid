@@ -3,9 +3,9 @@ mod points;
 
 use std::ops::{Deref, DerefMut};
 
-pub use imu::{ImuInit, ImuMeasured, StampedImu};
+pub use imu::*;
 use nalgebra::{RealField, Scalar};
-pub use points::{LidarPoint, PointsProcessBuffer, StampedPoints};
+pub use points::*;
 use simba::scalar::SupersetOf;
 
 use crate::{eskf::state::common::AccState, utils::ToRadians};
@@ -45,6 +45,7 @@ impl<T> LIO<T>
 where
     T: RealField + ToRadians,
 {
+    #[inline]
     pub fn update_points_with_imus<P>(
         &mut self,
         points: StampedPoints<T, P>,

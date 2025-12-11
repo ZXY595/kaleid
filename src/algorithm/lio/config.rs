@@ -1,5 +1,8 @@
 use crate::{
-    frame::{Framed, IsometryFramed, frames},
+    frame::{
+        Framed, IsometryFramed,
+        frames::{BodyFrame, ImuFrame},
+    },
     voxel_map,
 };
 
@@ -22,7 +25,7 @@ pub struct Config<T: Scalar, G = T> {
     pub measure_noise: MeasureNoiseConfig<T>,
 
     /// The extrinsics of the IMU to the body frame.
-    pub extrinsics: IsometryFramed<T, fn(frames::Body) -> frames::Imu>,
+    pub extrinsics: IsometryFramed<T, fn(BodyFrame) -> ImuFrame>,
 
     /// The gravity norm. Used to calculate the gravity factor (also known as gravity compensation)
     ///

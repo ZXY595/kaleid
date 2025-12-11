@@ -13,7 +13,7 @@ use state::State;
 use crate::{
     eskf::{
         Eskf,
-        state::common::{GravityState, LinearAccState},
+        state::common::{GravityState, LinearAccState, PoseState, VelocityState},
     },
     frame::{IsometryFramed, frames},
     utils::ToRadians,
@@ -21,7 +21,7 @@ use crate::{
 };
 pub use config::{BodyPointProcessCov, Config, NoGravityConfig};
 use downsample::{Downsampler, ScanDownsampler};
-use measurement::PointsProcessBuffer;
+use measurement::ProcessingPoints;
 
 use nalgebra::{ComplexField, RealField};
 
@@ -49,11 +49,11 @@ where
     eskf: Eskf<State<T>>,
     map: VoxelMap<T>,
     downsampler: ScanDownsampler<T>,
-    points_process_buffer: PointsProcessBuffer<T>,
+    points_process_buffer: Vec<ProcessingPoints<T>>,
     // configs
     body_point_process_cov: BodyPointProcessCov<T>,
     measure_noise: MeasureNoiseConfig<T>,
-    extrinsics: IsometryFramed<T, fn(frames::Body) -> frames::Imu>,
+    extrinsics: IsometryFramed<T, fn(frames::BodyFrame) -> frames::ImuFrame>,
     gravity_factor: T,
 }
 
@@ -110,8 +110,13 @@ where
     }
 
     #[inline]
-    pub fn get_pose(&self) -> &IsometryFramed<T, fn(frames::Imu) -> frames::World> {
-        &self.eskf.pose.0
+    pub fn get_pose(&self) -> &PoseState<T> {
+        &self.eskf.pose
+    }
+
+    #[inline]
+    pub fn get_velocity(&self) -> &VelocityState<T> {
+        &self.eskf.velocity
     }
 
     #[inline]

@@ -10,7 +10,10 @@ use crate::{
             common::{PositionState, RotationState},
         },
     },
-    frame::{Framed, IsometryFramed, frames},
+    frame::{
+        Framed, IsometryFramed,
+        frames::{BodyFrame, ImuFrame, WorldFrame},
+    },
     voxel_map::uncertain::UncertainBodyPoint,
 };
 
@@ -27,9 +30,9 @@ where
 {
     pub fn to_uncertain_world_point<S>(
         self,
-        imu_to_world: &IsometryFramed<T, fn(frames::Imu) -> frames::World>,
-        body_to_world: &IsometryFramed<T, fn(frames::Body) -> frames::World>,
-        cross_matrix_imu: Framed<&Matrix3<T>, frames::Imu>,
+        imu_to_world: &IsometryFramed<T, fn(ImuFrame) -> WorldFrame>,
+        body_to_world: &IsometryFramed<T, fn(BodyFrame) -> WorldFrame>,
+        cross_matrix_imu: Framed<&Matrix3<T>, ImuFrame>,
         eskf_cov: &Covariance<S>,
     ) -> UncertainWorldPoint<T>
     where
