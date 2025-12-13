@@ -71,7 +71,7 @@ where
             .fill_diagonal(dt.clone());
 
         fx.sensitivity_mut::<LinearAccState<T>, VelocityState<T>>()
-            .copy_from(&(state.pose.rotation.matrix() * -dt.clone()));
+            .copy_from(&(state.pose.rotation.matrix() * dt.clone()));
 
         fx.sensitivity_mut::<AngularAccState<T>, RotationState<T>>()
             .fill_diagonal(dt.clone());
