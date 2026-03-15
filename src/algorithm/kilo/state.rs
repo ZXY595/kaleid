@@ -1,13 +1,10 @@
-use crate::{
-    algorithm::lio,
-    eskf::state::{common::Vector3State, macro_export::*},
-};
+use crate::algorithm::lio;
+use kaleid::state::{KFState, StateBegin, StateEnd, StateOffset, common::Vector3State};
 use nalgebra::{RealField, Scalar};
-use odometries_macros::{KFState, VectorAddAssign};
+use odometries_macros::KFState;
 
-#[derive(KFState, VectorAddAssign)]
-#[element(T)]
-#[vector_add_assign(predicates(RealField))]
+#[derive(KFState)]
+#[element(T: RealField)]
 pub struct State<T>
 where
     T: Scalar,

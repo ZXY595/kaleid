@@ -11,9 +11,9 @@ use std::ops::Deref;
 use state::State;
 
 use crate::{
-    eskf::{
-        Eskf,
-        state::common::{GravityState, LinearAccState, PoseState, VelocityState},
+    algorithm::imu::{
+        measure::ImuInit,
+        state::{AccState, GravityState, VelocityState},
     },
     frame::{IsometryFramed, frames},
     utils::ToRadians,
@@ -21,30 +21,16 @@ use crate::{
 };
 pub use config::{BodyPointProcessCov, Config, NoGravityConfig};
 use downsample::{Downsampler, ScanDownsampler};
+use kaleid::{Eskf, state::common::PoseState};
 use measurement::ProcessingPoints;
 
-use nalgebra::{ComplexField, RealField};
+use nalgebra::RealField;
 
-pub use measurement::{ImuInit, ImuMeasured, MeasureNoiseConfig, StampedImu};
+pub use measurement::MeasureNoiseConfig;
 
-/// # Input
-/// ```text
-/// ├───┬─>>─┬─── timestamp ───>>──┬───┬───┤
-///     │    │        │            │   │
-///     │    │        ┴            │   │
-///     │    │   LiDAR points      │   │
-///     │    │                     │   │
-///     │    │               IMU ├─╯   │
-///     │    │                         │
-///     │    ╰─┤ LiDAR points          │
-///     │                              │
-///     ╰─┤ IMU                        │
-///                                    │
-///                      LiDAR point ├─╯
-/// ```
 pub struct LIO<T>
 where
-    T: ComplexField,
+    T: RealField,
 {
     eskf: Eskf<State<T>>,
     map: VoxelMap<T>,
@@ -79,10 +65,10 @@ where
 
         let gravity = imu_init.linear_acc_mean.deref() * gravity_factor;
 
-        let eskf = &mut lio.eskf;
-        eskf.acc_with_bias.acc.linear = LinearAccState::new(gravity.clone());
-        eskf.gravity = GravityState::new(-gravity);
-        eskf.acc_with_bias.bias.angular = imu_init.angular_acc_bias;
+        let imu = &mut lio.eskf.imu;
+        imu.acc.state = gravity.clone();
+        imu.gravity = GravityState::new(gravity);
+        imu.gyro.bias = imu_init.angular_acc_bias;
 
         lio
     }
@@ -116,7 +102,7 @@ where
 
     #[inline]
     pub fn get_velocity(&self) -> &VelocityState<T> {
-        &self.eskf.velocity
+        &self.eskf.imu.velocity
     }
 
     #[inline]

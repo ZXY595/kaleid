@@ -3,7 +3,8 @@ use std::ops::Deref;
 
 use nalgebra::{ComplexField, RealField, Scalar, U1};
 
-use crate::{eskf::state::KFState, voxel_map::MapIndex};
+use crate::voxel_map::MapIndex;
+use kaleid::KFState;
 
 use super::{
     VoxelMap,

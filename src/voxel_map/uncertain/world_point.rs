@@ -4,7 +4,7 @@ use nalgebra::{DefaultAllocator, Matrix3, RealField, Scalar, U3, allocator::Allo
 
 use crate::{
     eskf::{
-        Covariance,
+        AnyStorageCov, Covariance,
         state::{
             KFState, SubStateOf,
             common::{PositionState, RotationState},
@@ -33,7 +33,7 @@ where
         imu_to_world: &IsometryFramed<T, fn(ImuFrame) -> WorldFrame>,
         body_to_world: &IsometryFramed<T, fn(BodyFrame) -> WorldFrame>,
         cross_matrix_imu: Framed<&Matrix3<T>, ImuFrame>,
-        eskf_cov: &Covariance<S>,
+        eskf_cov: &AnyStorageCov!(S),
     ) -> UncertainWorldPoint<T>
     where
         S: KFState<Element = T>,
@@ -42,8 +42,8 @@ where
         DefaultAllocator: Allocator<S::Dim, S::Dim>,
     {
         let world_point = self.deref() * body_to_world;
-        let rot_cov = eskf_cov.sub_covariance::<RotationState<T>>();
-        let pos_cov = eskf_cov.sub_covariance::<PositionState<T>>();
+        let rot_cov = eskf_cov.sub_cov::<RotationState<T>>();
+        let pos_cov = eskf_cov.sub_cov::<PositionState<T>>();
 
         let mut cov = pos_cov.into_owned();
         cov.quadform_tr(

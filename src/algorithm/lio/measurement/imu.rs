@@ -1,60 +1,37 @@
-mod init;
-use std::ops::Deref;
-
-use nalgebra::{RealField, Scalar, stack};
-use num_traits::Zero;
+use nalgebra::{RealField, stack};
 
 use crate::{
-    algorithm::lio::state::State,
-    eskf::{
-        Eskf,
-        observe::NoModelObservation,
-        state::common::{AccState, AccWithBiasState},
+    algorithm::{
+        imu::measure::{ImuMeasured, ImuObserved, StampedImu},
+        lio::{LIO, state::State},
     },
     utils::ToRadians,
 };
+use kaleid::Eskf;
 
-use super::{LIO, StampedMeasurement};
-pub use init::ImuInit;
-
-pub type ImuObserved<T> = NoModelObservation<AccWithBiasState<T>, State<T>>;
-pub type ImuMeasured<T> = AccState<T>;
-pub type StampedImu<T> = StampedMeasurement<T, ImuMeasured<T>>;
-
-impl<T> Eskf<State<T>>
-where
-    T: RealField + ToRadians,
-{
-    fn observe_imu(
-        &self,
-        gravity_factor: T,
-        measure_noise: &AccState<T>,
-        imu_acc: &ImuMeasured<T>,
-    ) -> ImuObserved<T> {
-        let measured_linear_acc =
-            imu_acc.linear.deref() * gravity_factor - self.state.acc_with_bias.linear().deref();
-
-        let measured_angular_acc =
-            imu_acc.angular.deref() - self.state.acc_with_bias.angular().deref();
-
-        #[expect(clippy::toplevel_ref_arg)]
-        let measurement = stack![measured_linear_acc; measured_angular_acc];
-
-        #[expect(clippy::toplevel_ref_arg)]
-        let noise = stack![measure_noise.linear; measure_noise.angular];
-
-        ImuObserved::new_no_model(measurement, noise)
-    }
-}
-
-impl<T: Scalar + Zero> StampedImu<T> {
-    pub fn zeros(timestamp: T) -> Self {
-        Self {
-            timestamp,
-            measured: ImuMeasured::default(),
-        }
-    }
-}
+// impl<T> Eskf<State<T>>
+// where
+//     T: RealField + ToRadians,
+// {
+//     fn observe_imu(
+//         &self,
+//         gravity_factor: T,
+//         measure_noise: &ImuMeasured<T>,
+//         imu_acc: &ImuMeasured<T>,
+//     ) -> ImuObserved<T> {
+//         let measured_linear_acc = imu_acc.acc * gravity_factor - self.state.acc.biased().deref();
+//
+//         let measured_angular_acc = imu_acc.gyro - self.state.gyro.biased().deref();
+//
+//         #[expect(clippy::toplevel_ref_arg)]
+//         let measurement = stack![measured_linear_acc; measured_angular_acc];
+//
+//         #[expect(clippy::toplevel_ref_arg)]
+//         let noise = stack![measure_noise.acc; measure_noise.gyro];
+//
+//         ImuObserved::new_no_model(measurement, noise)
+//     }
+// }
 
 impl<T> Extend<StampedImu<T>> for LIO<T>
 where
@@ -66,11 +43,11 @@ where
     {
         imus.into_iter().for_each(|imu| {
             self.eskf.update(imu.timestamp, |eskf| {
-                Some(eskf.observe_imu(
+                (eskf.observe_imu(
                     self.gravity_factor.clone(),
                     &self.measure_noise.imu_acc,
                     &imu.measured,
-                ))
+                ),)
             });
         })
     }

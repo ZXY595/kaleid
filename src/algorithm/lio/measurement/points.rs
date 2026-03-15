@@ -1,10 +1,9 @@
 use std::ops::Deref;
 
-use nalgebra::{Dyn, Point3, RealField, Scalar, Vector3, stack};
+use nalgebra::{Dyn, OMatrix, OVector, Point3, RealField, Scalar, Vector3, stack};
 
 use crate::{
     algorithm::lio::{downsample::Downsample, state::State},
-    eskf::{Eskf, observe::UnbiasedObservation, state::common::PoseState, uncertain::Uncertained},
     frame::{
         BodyPoint, CrossMatrixFramed, Framed, IsometryFramed,
         frames::{BodyFrame, ImuFrame, WorldFrame},
@@ -15,11 +14,12 @@ use crate::{
         uncertain::{UncertainBodyPoint, UncertainWorldPoint},
     },
 };
+use kaleid::{
+    Eskf,
+    uncertain::Uncertained,
+};
 
-use super::{LIO, StampedMeasurement};
-
-pub type StampedPoints<T, P> = StampedMeasurement<T, P>;
-pub type PointsObserved<T> = UnbiasedObservation<PoseState<T>, State<T>, Dyn>;
+use super::LIO;
 
 pub trait LidarPoint<T: Scalar>: Clone {
     fn to_body_point(self) -> BodyPoint<T>;
@@ -175,9 +175,9 @@ where
 
                 let noise = measure_noise.clone() * residual_cov.to_scalar();
 
-                Some((measurement, model, noise))
+                Some((measurement, noise, model))
             })
-            .collect::<PointsObserved<T>>();
+            .collect::<(OVector<_>, OVector<_>, OMatrix<_, _ ,_>)>();
 
         if observation.get_dim().0 == 0 {
             return None;

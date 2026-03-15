@@ -1,25 +1,20 @@
 mod imu;
 mod points;
 
-use std::ops::{Deref, DerefMut};
-
-pub use imu::*;
 use nalgebra::{RealField, Scalar};
 pub use points::*;
 use simba::scalar::SupersetOf;
 
-use crate::{eskf::state::common::AccState, utils::ToRadians};
+use crate::{
+    algorithm::imu::{measure::StampedImu, state::AccState},
+    utils::ToRadians,
+};
 
 use super::LIO;
 
 pub struct MeasureNoiseConfig<T: Scalar> {
     pub imu_acc: AccState<T>,
     pub lidar_point: T,
-}
-
-pub struct StampedMeasurement<T, M> {
-    pub timestamp: T,
-    pub measured: M,
 }
 
 impl<T> Default for MeasureNoiseConfig<T>
@@ -74,36 +69,6 @@ where
             self.extend(imus_before_points);
             self.update_stamped_points(points);
         });
-    }
-}
-
-impl<T: Scalar, M> StampedMeasurement<T, M> {
-    pub const fn new(timestamp: T, measured: M) -> Self {
-        Self {
-            timestamp,
-            measured,
-        }
-    }
-
-    pub fn from_tuple((timestamp, measured): (T, M)) -> Self {
-        Self {
-            timestamp,
-            measured,
-        }
-    }
-}
-
-impl<T: Scalar, M> Deref for StampedMeasurement<T, M> {
-    type Target = M;
-
-    fn deref(&self) -> &Self::Target {
-        &self.measured
-    }
-}
-
-impl<T: Scalar> DerefMut for StampedImu<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.measured
     }
 }
 
