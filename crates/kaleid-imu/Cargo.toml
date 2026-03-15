@@ -1,8 +1,0 @@
-[package]
-name = "kaleid-imu"
-version = "0.1.0"
-edition.workspace = true
-
-[dependencies]
-kaleid.workspace = true
-nalgebra.workspace = true
