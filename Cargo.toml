@@ -1,48 +1,24 @@
 [package]
-name = "odometries"
+name = "kaleid"
 version = "0.1.0"
 edition.workspace = true
-description = "A library for tightly‑coupled error‑state Kalman filter based odometry systems"
-repository = "https://github.com/ZXY595/odometries"
-license = "MIT"
-keywords = ["SLAM", "kalman", "navigation", "odometry", "robot", "voxelmap"]
 
 [workspace]
-resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
 edition = "2024"
 
 [workspace.dependencies]
-kaleid = { path = "crates/kaleid" }
-kaleid-macros = { path = "crates/kaleid-macros" }
-nalgebra = "0.34"
-num-traits = "0.2"
-odometries-core = { path = "crates/odometries-core" }
-odometries-macros = { path = "crates/odometries-macros" }
-simba = "0.9"
-typenum = "1.12"
 extension-traits = "2.0"
+kaleid = { path = "." }
+log = "0.4"
+nalgebra = "0.34.1"
+derive_deref = "1.1.1"
 
 [dependencies]
-itertools = "0.14"
-kaleid.workspace = true
-kaleid-macros.workspace = true
+derive_deref.workspace = true
+extension-traits.workspace = true
+kaleid_macros = { path = "crates/kaleid_macros" }
+log.workspace = true
 nalgebra.workspace = true
-nohash-hasher = "0.2"
-num-traits.workspace = true
-odometries-core.workspace = true
-odometries-macros.workspace = true
-rayon = { version = "1.11", optional = true }
-simba.workspace = true
-slab = "0.4"
-
-[dev-dependencies]
-livox2 = { version = "0.2.2", features = ["async-net", "simd"] }
-rand = "0.10"
-smol = "2.0"
-
-[features]
-# rayon = [] # planning to add rayon support
-# no-std = [] # planning

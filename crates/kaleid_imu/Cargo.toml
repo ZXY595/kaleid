@@ -1,0 +1,9 @@
+[package]
+name = "kaleid_imu"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+kaleid.workspace = true
+nalgebra.workspace = true
+derive_deref.workspace = true
