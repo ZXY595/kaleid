@@ -3,18 +3,21 @@
 //! Like what the [`frunk`](https://github.com/lloydmeta/frunk) crate implements,
 //! but for rust tuples.
 
+/// TODO: Add `diagnostic::on_unimplemented`
 pub trait Pluck<Target, Index> {
+    /// The elements before the pluck target in the tuple.
     type Before;
-    type Remaining;
+    /// The remain elements of the tuple after plucking
+    type Remain;
 
-    fn pluck(self) -> (Target, Self::Remaining);
+    fn pluck(self) -> (Target, Self::Remain);
 }
 
 impl<Target, Tail> Pluck<Target, ()> for (Target, Tail) {
     type Before = ();
-    type Remaining = Tail;
+    type Remain = Tail;
 
-    fn pluck(self) -> (Target, Self::Remaining) {
+    fn pluck(self) -> (Target, Self::Remain) {
         self
     }
 }
@@ -24,9 +27,9 @@ where
     Tail: Pluck<Target, TailIndex>,
 {
     type Before = (Head, Tail::Before);
-    type Remaining = (Head, Tail::Remaining);
+    type Remain = (Head, Tail::Remain);
 
-    fn pluck(self) -> (Target, Self::Remaining) {
+    fn pluck(self) -> (Target, Self::Remain) {
         let (target, tail) = Tail::pluck(self.1);
         (target, (self.0, tail))
     }
@@ -34,9 +37,9 @@ where
 
 impl<'a, Target, Tail> Pluck<&'a Target, ()> for &'a (Target, Tail) {
     type Before = ();
-    type Remaining = &'a Tail;
+    type Remain = &'a Tail;
 
-    fn pluck(self) -> (&'a Target, Self::Remaining) {
+    fn pluck(self) -> (&'a Target, Self::Remain) {
         (&self.0, &self.1)
     }
 }
@@ -46,12 +49,9 @@ where
     &'a Tail: Pluck<&'a Target, TailIndex>,
 {
     type Before = (Head, <&'a Tail as Pluck<&'a Target, TailIndex>>::Before);
-    type Remaining = (
-        &'a Head,
-        <&'a Tail as Pluck<&'a Target, TailIndex>>::Remaining,
-    );
+    type Remain = (&'a Head, <&'a Tail as Pluck<&'a Target, TailIndex>>::Remain);
 
-    fn pluck(self) -> (&'a Target, Self::Remaining) {
+    fn pluck(self) -> (&'a Target, Self::Remain) {
         let (target, tail) = self.1.pluck();
         (target, (&self.0, tail))
     }
@@ -59,9 +59,9 @@ where
 
 impl<'a, Target, Tail> Pluck<&'a Target, ()> for &'a mut (Target, Tail) {
     type Before = ();
-    type Remaining = &'a Tail;
+    type Remain = &'a Tail;
 
-    fn pluck(self) -> (&'a Target, Self::Remaining) {
+    fn pluck(self) -> (&'a Target, Self::Remain) {
         (&self.0, &self.1)
     }
 }
@@ -72,12 +72,12 @@ where
     &'a mut Tail: Pluck<&'a Target, TailIndex>,
 {
     type Before = (Head, <&'a mut Tail as Pluck<&'a Target, TailIndex>>::Before);
-    type Remaining = (
+    type Remain = (
         &'a Head,
-        <&'a mut Tail as Pluck<&'a Target, TailIndex>>::Remaining,
+        <&'a mut Tail as Pluck<&'a Target, TailIndex>>::Remain,
     );
 
-    fn pluck(self) -> (&'a Target, Self::Remaining) {
+    fn pluck(self) -> (&'a Target, Self::Remain) {
         let (target, tail) = self.1.pluck();
         (target, (&self.0, tail))
     }
@@ -85,9 +85,9 @@ where
 
 impl<'a, Target, Tail> Pluck<&'a mut Target, ()> for &'a mut (Target, Tail) {
     type Before = ();
-    type Remaining = &'a mut Tail;
+    type Remain = &'a mut Tail;
 
-    fn pluck(self) -> (&'a mut Target, Self::Remaining) {
+    fn pluck(self) -> (&'a mut Target, Self::Remain) {
         (&mut self.0, &mut self.1)
     }
 }
@@ -101,28 +101,28 @@ where
         Head,
         <&'a mut Tail as Pluck<&'a mut Target, TailIndex>>::Before,
     );
-    type Remaining = (
+    type Remain = (
         &'a mut Head,
-        <&'a mut Tail as Pluck<&'a mut Target, TailIndex>>::Remaining,
+        <&'a mut Tail as Pluck<&'a mut Target, TailIndex>>::Remain,
     );
 
-    fn pluck(self) -> (&'a mut Target, Self::Remaining) {
+    fn pluck(self) -> (&'a mut Target, Self::Remain) {
         let (target, tail) = self.1.pluck();
         (target, (&mut self.0, tail))
     }
 }
 
 pub trait Extract<Target, Indices> {
-    type Remaining;
+    type Remain;
 
-    fn extract(self) -> (Target, Self::Remaining);
+    fn extract(self) -> (Target, Self::Remain);
 }
 
 impl<Src> Extract<(), ()> for Src {
-    type Remaining = Src;
+    type Remain = Src;
 
     #[inline(always)]
-    fn extract(self) -> ((), Self::Remaining) {
+    fn extract(self) -> ((), Self::Remain) {
         ((), self)
     }
 }
@@ -130,13 +130,12 @@ impl<Src> Extract<(), ()> for Src {
 impl<THead, TTail, Src, IndexHead, IndexTail> Extract<(THead, TTail), (IndexHead, IndexTail)>
     for Src
 where
-    Self: Pluck<THead, IndexHead, Remaining: Extract<TTail, IndexTail>>,
+    Self: Pluck<THead, IndexHead, Remain: Extract<TTail, IndexTail>>,
 {
-    type Remaining =
-        <<Self as Pluck<THead, IndexHead>>::Remaining as Extract<TTail, IndexTail>>::Remaining;
+    type Remain = <<Self as Pluck<THead, IndexHead>>::Remain as Extract<TTail, IndexTail>>::Remain;
 
     #[inline(always)]
-    fn extract(self) -> ((THead, TTail), Self::Remaining) {
+    fn extract(self) -> ((THead, TTail), Self::Remain) {
         let (target_head, rest) = self.pluck();
         let (target_tail, remain) = rest.extract();
         ((target_head, target_tail), remain)

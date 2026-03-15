@@ -10,6 +10,7 @@ pub use nalgebra::Const;
 
 type DoFMatrix<D> = OMatrix<Element, <D as DoF>::DoF, <D as DoF>::DoF>;
 
+/// Degrees of Freedom
 pub trait DoF {
     type DoF: DimName;
 }
