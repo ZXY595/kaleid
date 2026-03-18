@@ -57,18 +57,12 @@ impl ErrorState for Rotation3<Element> {
     }
 }
 
-#[derive(Debug, Deref, DerefMut)]
-pub struct Velocity(Vector3<Element>);
-
-impl DoF for Velocity {
-    type DoF = Const<3>;
+mod kaleid {
+    pub use crate::*;
 }
 
-impl ErrorState for Velocity {
-    fn inject(&mut self, inj: Vector<Element, Self::DoF, impl Storage<Element, Self::DoF>>) {
-        self.0.inject(inj)
-    }
-}
+#[derive(Debug, ErrorState, Deref, DerefMut)]
+pub struct Velocity(#[DoF = 3] Vector3<Element>);
 
 impl<S: DoF, I1, I2> BuildTransition<S, (I1, I2)> for Velocity
 where
