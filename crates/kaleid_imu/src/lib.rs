@@ -58,15 +58,15 @@ pub struct Gyro(#[DoF = 3] Vector3<Element>);
 impl<S: DoF, I1, I2, I3> BuildTransition<S, (I1, I2, I3)> for Gyro
 where
     for<'a> &'a S: Pluck<&'a Self, I1>,
-    S: Pluck<UnitQuaternion<Element>, I2, Before: DoF> + Pluck<Self, I3, Before: DoF>,
+    S: Pluck<Rotation3<Element>, I2, Before: DoF> + Pluck<Self, I3, Before: DoF>,
 {
     fn build_transition(transition: &mut TransitionViewMut<S>, states: &S, dt: Element) {
         let gyro = states.pluck().0;
         transition
-            .set_self_block::<UnitQuaternion<Element>, _>(
+            .set_self_block::<Rotation3<Element>, _>(
                 Rotation3::from_scaled_axis(gyro.0 * -dt).matrix(),
             )
-            .block::<UnitQuaternion<Element>, Self, _, _>()
+            .block::<Rotation3<Element>, Self, _, _>()
             .fill_diagonal(dt);
     }
 }
