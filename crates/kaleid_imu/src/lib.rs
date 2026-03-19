@@ -3,7 +3,7 @@ pub use kaleid::DoF;
 use kaleid::{
     Const, Element,
     error_state::{ErrorState, Velocity},
-    extract::{Extract, Pluck},
+    extract::{Access, Extract},
     predict::{BuildTransition, TransitionViewMut},
 };
 use nalgebra::{Rotation3, Storage, UnitQuaternion, Vector, Vector3};
@@ -14,9 +14,7 @@ pub struct Acceleration(#[DoF = 3] Vector3<Element>);
 impl<S: DoF, I1, I2, I3, I4> BuildTransition<S, (I1, I2, I3, I4)> for Acceleration
 where
     for<'a> &'a S: Extract<(&'a UnitQuaternion<Element>, &'a Self), I1>,
-    S: Pluck<Velocity, I2, Before: DoF>
-        + Pluck<UnitQuaternion<Element>, I3, Before: DoF>
-        + Pluck<Self, I4, Before: DoF>,
+    S: Access<Velocity, I2> + Access<UnitQuaternion<Element>, I3> + Access<Self, I4>,
 {
     fn build_transition(transition: &mut TransitionViewMut<S>, states: &S, dt: Element) {
         let (rot, acc) = states.extract().0;
@@ -45,7 +43,7 @@ impl ErrorState for Gravity {
 
 impl<S: DoF, I1, I2> BuildTransition<S, (I1, I2)> for Gravity
 where
-    S: Pluck<Velocity, I1, Before: DoF> + Pluck<Self, I2, Before: DoF>,
+    S: Access<Velocity, I1> + Access<Self, I2>,
 {
     fn build_transition(transition: &mut TransitionViewMut<S>, _: &S, dt: Element) {
         transition.block::<Velocity, Self, _, _>().fill_diagonal(dt);
@@ -57,8 +55,8 @@ pub struct Gyro(#[DoF = 3] Vector3<Element>);
 
 impl<S: DoF, I1, I2, I3> BuildTransition<S, (I1, I2, I3)> for Gyro
 where
-    for<'a> &'a S: Pluck<&'a Self, I1>,
-    S: Pluck<Rotation3<Element>, I2, Before: DoF> + Pluck<Self, I3, Before: DoF>,
+    for<'a> &'a S: Access<&'a Self, I1>,
+    S: Access<Rotation3<Element>, I2> + Access<Self, I3>,
 {
     fn build_transition(transition: &mut TransitionViewMut<S>, states: &S, dt: Element) {
         let gyro = states.pluck().0;

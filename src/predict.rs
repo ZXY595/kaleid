@@ -6,7 +6,7 @@ use nalgebra::{
 pub type Element = f64;
 pub use nalgebra::Const;
 
-use crate::{Covariance, DoF, DoFMatrix, extract::Pluck};
+use crate::{Covariance, DoF, DoFMatrix, extract::Access};
 
 pub trait BuildTransition<S: DoF, Indices> {
     fn build_transition(transition: &mut TransitionViewMut<S>, states: &S, dt: Element) {
@@ -44,12 +44,12 @@ impl<'a, D: DoF> TransitionViewMut<'a, D> {
         &mut self,
     ) -> MatrixViewMut<'_, Element, D1::DoF, D2::DoF, Const<1>, D::DoF>
     where
-        D: Pluck<D1, I1, Before: DoF> + Pluck<D2, I2, Before: DoF>,
+        D: Access<D1, I1> + Access<D2, I2>,
     {
         self.generic_view_mut(
             (
-                const { <<D as Pluck<D1, I1>>::Before as DoF>::DoF::DIM },
-                const { <<D as Pluck<D2, I2>>::Before as DoF>::DoF::DIM },
+                const { <D as Access<D1, I1>>::OFFSET },
+                const { <D as Access<D2, I2>>::OFFSET },
             ),
             (D1::DoF::name(), D2::DoF::name()),
         )
@@ -60,7 +60,7 @@ impl<'a, D: DoF> TransitionViewMut<'a, D> {
         block: &Matrix<Element, D1::DoF, D2::DoF, impl Storage<Element, D1::DoF, D2::DoF>>,
     ) -> &mut Self
     where
-        D: Pluck<D1, I1, Before: DoF> + Pluck<D2, I2, Before: DoF>,
+        D: Access<D1, I1> + Access<D2, I2>,
     {
         self.block::<D1, D2, I1, I2>().copy_from(block);
         self
@@ -71,7 +71,7 @@ impl<'a, D: DoF> TransitionViewMut<'a, D> {
         block: &Matrix<Element, DD::DoF, DD::DoF, impl Storage<Element, DD::DoF, DD::DoF>>,
     ) -> &mut Self
     where
-        D: Pluck<DD, I, Before: DoF>,
+        D: Access<DD, I>,
     {
         self.set_block::<DD, DD, I, I>(block)
     }
@@ -81,7 +81,7 @@ impl<'a, D: DoF> TransitionViewMut<'a, D> {
         f: impl FnOnce(MatrixViewMut<'_, Element, D1::DoF, D2::DoF, Const<1>, D::DoF>),
     ) -> &mut Self
     where
-        D: Pluck<D1, I1, Before: DoF> + Pluck<D2, I2, Before: DoF>,
+        D: Access<D1, I1> + Access<D2, I2>,
     {
         f(self.block::<D1, D2, I1, I2>());
         self

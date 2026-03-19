@@ -8,7 +8,7 @@ pub type Element = f64;
 pub use nalgebra::Const;
 
 use crate::{
-    extract::Pluck,
+    extract::Access,
     predict::{BuildTransition, TransitionViewMut},
 };
 
@@ -66,7 +66,7 @@ pub struct Velocity(#[DoF = 3] Vector3<Element>);
 
 impl<S: DoF, I1, I2> BuildTransition<S, (I1, I2)> for Velocity
 where
-    S: Pluck<Translation3<Element>, I1, Before: DoF> + Pluck<Self, I2, Before: DoF>,
+    S: Access<Translation3<Element>, I1> + Access<Self, I2>,
 {
     fn build_transition(transition: &mut TransitionViewMut<S>, _: &S, dt: Element) {
         transition
