@@ -14,8 +14,7 @@ where
         states: &mut D,
         measurement: Vector<Element, DD::DoF, impl Storage<Element, DD::DoF>>,
         noise: Vector<Element, DD::DoF, impl Storage<Element, DD::DoF>>,
-        cross_cov: Matrix<Element, D::DoF, DD::DoF, impl Storage<Element, D::DoF, DD::DoF>>,
-        cross_cov_tr: Matrix<Element, DD::DoF, D::DoF, impl Storage<Element, DD::DoF, D::DoF>>,
+        cross_cov_tr: &Matrix<Element, DD::DoF, D::DoF, impl Storage<Element, DD::DoF, D::DoF>>,
         innovation_cov: Matrix<Element, DD::DoF, DD::DoF, impl Storage<Element, DD::DoF, DD::DoF>>,
     ) where
         DefaultAllocator: Allocator<DD::DoF, DD::DoF>
@@ -23,10 +22,11 @@ where
             + Allocator<D::DoF, DD::DoF>
             + Allocator<DD::DoF, D::DoF>,
     {
-        let kalman_gain = cross_cov
-            * innovation_cov
-                .diagonal_add(noise)
-                .cholesky_inverse_with_substitute();
+        // S * K^T = HP
+        let kalman_gain = innovation_cov
+            .diagonal_add(noise)
+            .cholesky_solve_with_substitute(cross_cov_tr)
+            .transpose();
 
         states.inject(&kalman_gain * measurement);
         self.0 -= kalman_gain * cross_cov_tr;
@@ -46,7 +46,7 @@ where
     ) -> OMatrix<Element, D, D> {
         let mut temp = self.into_owned();
         for i in 0..D::DIM {
-            // # SAFETY: 
+            // # SAFETY:
             //
             // D::DIM implements `DimName` which means it is a type level constant,
             // temp[i, i] and diagnoal[i] is always safe to access in range.
@@ -56,19 +56,24 @@ where
     }
 }
 
-#[extension(trait CholeskyInverse)]
+#[extension(trait CholeskySolve)]
 impl<D: DimName> OMatrix<Element, D, D>
 where
     DefaultAllocator: Allocator<D, D>,
 {
-    fn cholesky_inverse_with_substitute(self) -> OMatrix<Element, D, D> {
+    fn cholesky_solve_with_substitute<DD: DimName>(
+        self,
+        b: &Matrix<Element, D, DD, impl Storage<Element, D, DD>>,
+    ) -> OMatrix<Element, D, DD>
+    where
+        DefaultAllocator: Allocator<D, DD>,
+    {
         const SUBSTITUTE: Element = 0.0001;
         let cholesky = Cholesky::new_with_substitute(self, SUBSTITUTE);
         // # SAFETY:
         //
         // this is safe because the value of `SUBSTITUTE` is positive definite
         // and the Cholesky decomposition is always successful
-        let cholesky = unsafe { cholesky.unwrap_unchecked() };
-        cholesky.inverse()
+        unsafe { cholesky.unwrap_unchecked() }.solve(b)
     }
 }
