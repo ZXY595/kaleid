@@ -6,21 +6,20 @@ use kaleid::{
     extract::{Access, Extract},
     predict::{BuildTransition, TransitionViewMut},
 };
-use nalgebra::{Rotation3, UnitQuaternion, Vector3};
+use nalgebra::{Rotation3, Vector3};
 
 #[derive(Debug, ErrorState, Deref, DerefMut)]
 pub struct Acceleration(#[DoF = 3] Vector3<Element>);
 
 impl<S: DoF, I1, I2, I3, I4> BuildTransition<S, (I1, I2, I3, I4)> for Acceleration
 where
-    for<'a> &'a S: Extract<(&'a UnitQuaternion<Element>, &'a Self), I1>,
-    S: Access<Velocity, I2> + Access<UnitQuaternion<Element>, I3> + Access<Self, I4>,
+    for<'a> &'a S: Extract<(&'a Rotation3<Element>, &'a Self), I1>,
+    S: Access<Velocity, I2> + Access<Rotation3<Element>, I3> + Access<Self, I4>,
 {
     fn build_transition(transition: &mut TransitionViewMut<S>, states: &S, dt: Element) {
         let (rot, acc) = states.extract().0;
-        let rot = rot.to_rotation_matrix();
         transition
-            .set_block::<Velocity, UnitQuaternion<Element>, _, _>(&(rot * acc.cross_matrix() * -dt))
+            .set_block::<Velocity, Rotation3<Element>, _, _>(&(rot * acc.cross_matrix() * -dt))
             .set_block::<Velocity, Self, _, _>(&(rot.matrix() * dt));
     }
 }
