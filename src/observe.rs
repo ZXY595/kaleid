@@ -44,9 +44,15 @@ where
         self,
         diagnoal: Vector<Element, D, impl Storage<Element, D>>,
     ) -> OMatrix<Element, D, D> {
-        let mut result = self.into_owned();
-        (0..D::DIM).for_each(|i| result[(i, i)] += diagnoal[i]);
-        result
+        let mut temp = self.into_owned();
+        for i in 0..D::DIM {
+            // # SAFETY: 
+            //
+            // D::DIM implements `DimName` which means it is a type level constant,
+            // temp[i, i] and diagnoal[i] is always safe to access in range.
+            unsafe { *temp.get_unchecked_mut((i, i)) += diagnoal.vget_unchecked(i) }
+        }
+        temp
     }
 }
 
@@ -56,10 +62,11 @@ where
     DefaultAllocator: Allocator<D, D>,
 {
     fn cholesky_inverse_with_substitute(self) -> OMatrix<Element, D, D> {
-        let cholesky = Cholesky::new_with_substitute(self, 0.0001);
+        const SUBSTITUTE: Element = 0.0001;
+        let cholesky = Cholesky::new_with_substitute(self, SUBSTITUTE);
         // # SAFETY:
         //
-        // this is safe because the value of `T::SUBSTITUTE` is positive definite
+        // this is safe because the value of `SUBSTITUTE` is positive definite
         // and the Cholesky decomposition is always successful
         let cholesky = unsafe { cholesky.unwrap_unchecked() };
         cholesky.inverse()
