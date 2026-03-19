@@ -1,12 +1,11 @@
 use derive_deref::{Deref, DerefMut};
+pub use nalgebra::Const;
 use nalgebra::{
     DefaultAllocator, DimName, Matrix, MatrixViewMut, RawStorageMut as _, Storage, ViewStorageMut,
     allocator::Allocator,
 };
-pub type Element = f64;
-pub use nalgebra::Const;
 
-use crate::{Covariance, DoF, DoFMatrix, extract::Access};
+use crate::{Covariance, DoF, DoFMatrix, Element, extract::Access};
 
 pub trait BuildTransition<S: DoF, Indices> {
     fn build_transition(transition: &mut TransitionViewMut<S>, states: &S, dt: Element) {

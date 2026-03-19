@@ -1,11 +1,10 @@
-use crate::DoF;
+use crate::{DoF, Element};
 
 use derive_deref::{Deref, DerefMut};
+pub use nalgebra::Const;
 use nalgebra::{
     DimName, Rotation3, SVector, Storage, Translation3, UnitQuaternion, Vector, Vector3,
 };
-pub type Element = f64;
-pub use nalgebra::Const;
 
 use crate::{
     extract::Access,
