@@ -6,7 +6,7 @@ use kaleid::{
     extract::{Access, Extract},
     predict::{BuildTransition, TransitionViewMut},
 };
-use nalgebra::{Rotation3, Storage, UnitQuaternion, Vector, Vector3};
+use nalgebra::{Rotation3, UnitQuaternion, Vector3};
 
 #[derive(Debug, ErrorState, Deref, DerefMut)]
 pub struct Acceleration(#[DoF = 3] Vector3<Element>);
@@ -28,18 +28,8 @@ where
 #[derive(Debug, ErrorState, Deref, DerefMut)]
 pub struct AccelerationBias(#[DoF = 3] Vector3<Element>);
 
-#[derive(Debug, Deref, DerefMut)]
-pub struct Gravity(Vector3<Element>);
-
-impl DoF for Gravity {
-    type DoF = Const<3>;
-}
-
-impl ErrorState for Gravity {
-    fn inject(&mut self, inj: Vector<Element, Self::DoF, impl Storage<Element, Self::DoF>>) {
-        self.0.inject(inj)
-    }
-}
+#[derive(Debug, ErrorState, Deref, DerefMut)]
+pub struct Gravity(#[DoF = 3] Vector3<Element>);
 
 impl<S: DoF, I1, I2> BuildTransition<S, (I1, I2)> for Gravity
 where
