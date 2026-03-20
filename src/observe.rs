@@ -85,6 +85,8 @@ impl<S: ErrorState> Covariance<S>
 where
     DefaultAllocator: Allocator<S::DoF, S::DoF>,
 {
+    /// If `M1` or `M2` is [`Multi`](crate::extract::Multi), you must ensure that
+    /// `D1` or `D2` is contiguous, otherwise you will get a compile time panic
     pub fn block<D1: DoF, D2: DoF, M1: ExtractMode, M2: ExtractMode, I1, I2>(
         &self,
     ) -> MatrixView<'_, Element, D1::DoF, D2::DoF, Const<1>, S::DoF>
@@ -111,6 +113,8 @@ where
         }
     }
 
+    /// If `M`  is [`Multi`](crate::extract::Multi), you must ensure that
+    /// `D` is contiguous, otherwise you will get a compile time panic
     pub fn rows<D: DoF, M: ExtractMode, I>(
         &self,
     ) -> MatrixView<'_, Element, D::DoF, S::DoF, Const<1>, S::DoF>

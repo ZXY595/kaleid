@@ -139,6 +139,7 @@ where
     }
 }
 
+#[diagnostic::do_not_recommend]
 impl<Src> Extract<(), (), Multi> for Src {
     type Remain = Src;
 
@@ -179,6 +180,7 @@ where
     }
 }
 
+#[diagnostic::do_not_recommend]
 impl<TS: Tuples, Src, Indices> Extract<TS, (Indices,), Multi> for Src
 where
     Src: Extract<TS::List, Indices, Multi>,
