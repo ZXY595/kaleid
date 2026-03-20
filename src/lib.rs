@@ -1,3 +1,6 @@
+#![forbid(clippy::undocumented_unsafe_blocks)]
+
+pub mod builder;
 pub mod error_state;
 pub mod extract;
 pub mod observe;
