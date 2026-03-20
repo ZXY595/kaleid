@@ -7,3 +7,4 @@ edition.workspace = true
 kaleid.workspace = true
 nalgebra.workspace = true
 derive_deref.workspace = true
+extension-traits.workspace = true
