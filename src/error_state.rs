@@ -7,7 +7,7 @@ use nalgebra::{
 };
 
 use crate::{
-    extract::Access,
+    extract::Extract,
     predict::{BuildTransition, TransitionViewMut},
 };
 
@@ -65,7 +65,7 @@ pub struct Velocity(#[DoF = 3] Vector3<Element>);
 
 impl<S: DoF, I1, I2> BuildTransition<S, (I1, I2)> for Velocity
 where
-    S: Access<Translation3<Element>, I1> + Access<Self, I2>,
+    S: Extract<Translation3<Element>, I1> + Extract<Self, I2>,
 {
     fn build_transition(transition: &mut TransitionViewMut<S>, _: &S, dt: Element) {
         transition

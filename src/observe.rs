@@ -1,26 +1,29 @@
 use extension_traits::extension;
 use nalgebra::{
-    Cholesky, DefaultAllocator, DimName, Matrix, OMatrix, Storage, Vector, allocator::Allocator,
+    Cholesky, Const, DefaultAllocator, DimName, Matrix, MatrixView, OMatrix, Storage, Vector,
+    ViewStorage, allocator::Allocator,
 };
 
-use crate::{DoF, Element, error_state::ErrorState};
+use crate::{
+    Covariance, DoF, Element,
+    error_state::ErrorState,
+    extract::{Extract, ExtractMode},
+};
 
-impl<D: ErrorState> crate::Covariance<D>
+impl<S: ErrorState> Covariance<S>
 where
-    DefaultAllocator: Allocator<D::DoF, D::DoF> + Allocator<D::DoF>,
+    DefaultAllocator: Allocator<S::DoF, S::DoF> + Allocator<S::DoF>,
 {
-    pub fn observe<DD: DoF>(
+    pub fn observe<D: DoF>(
         &mut self,
-        states: &mut D,
-        measurement: Vector<Element, DD::DoF, impl Storage<Element, DD::DoF>>,
-        noise: Vector<Element, DD::DoF, impl Storage<Element, DD::DoF>>,
-        cross_cov_tr: &Matrix<Element, DD::DoF, D::DoF, impl Storage<Element, DD::DoF, D::DoF>>,
-        innovation_cov: Matrix<Element, DD::DoF, DD::DoF, impl Storage<Element, DD::DoF, DD::DoF>>,
+        states: &mut S,
+        measurement: &Vector<Element, D::DoF, impl Storage<Element, D::DoF>>,
+        noise: &Vector<Element, D::DoF, impl Storage<Element, D::DoF>>,
+        cross_cov_tr: &Matrix<Element, D::DoF, S::DoF, impl Storage<Element, D::DoF, S::DoF>>,
+        innovation_cov: Matrix<Element, D::DoF, D::DoF, impl Storage<Element, D::DoF, D::DoF>>,
     ) where
-        DefaultAllocator: Allocator<DD::DoF, DD::DoF>
-            + Allocator<DD::DoF>
-            + Allocator<D::DoF, DD::DoF>
-            + Allocator<DD::DoF, D::DoF>,
+        DefaultAllocator:
+            Allocator<D::DoF, D::DoF> + Allocator<S::DoF, D::DoF> + Allocator<D::DoF, S::DoF>,
     {
         // S * K^T = HP
         let kalman_gain = innovation_cov
@@ -42,7 +45,7 @@ where
     #[inline]
     fn diagonal_add(
         self,
-        diagnoal: Vector<Element, D, impl Storage<Element, D>>,
+        diagnoal: &Vector<Element, D, impl Storage<Element, D>>,
     ) -> OMatrix<Element, D, D> {
         let mut temp = self.into_owned();
         for i in 0..D::DIM {
@@ -75,5 +78,59 @@ where
         // this is safe because the value of `SUBSTITUTE` is positive definite
         // and the Cholesky decomposition is always successful
         unsafe { cholesky.unwrap_unchecked() }.solve(b)
+    }
+}
+
+impl<S: ErrorState> Covariance<S>
+where
+    DefaultAllocator: Allocator<S::DoF, S::DoF>,
+{
+    pub fn block<D1: DoF, D2: DoF, M1: ExtractMode, M2: ExtractMode, I1, I2>(
+        &self,
+    ) -> MatrixView<'_, Element, D1::DoF, D2::DoF, Const<1>, S::DoF>
+    where
+        S: Extract<D1, I1, M1> + Extract<D2, I2, M2>,
+    {
+        let start = <S as Extract<D1, I1, M1>>::OFFSET
+            .into()
+            .zip(<S as Extract<D2, I2, M2>>::OFFSET.into())
+            .expect("states is not contiguous");
+
+        // # Safety:
+        //
+        // `<S as DoF>::DoF` implements DimName, which means `RStride` always equal to `Const<1>`,
+        // and `CStride` equal to `S::DoF`.
+        unsafe {
+            let data = ViewStorage::new_with_strides_unchecked(
+                &self.data,
+                start,
+                (D1::DoF::name(), D2::DoF::name()),
+                (Const::<1>, S::DoF::name()),
+            );
+            Matrix::from_data_statically_unchecked(data)
+        }
+    }
+
+    pub fn rows<D: DoF, M: ExtractMode, I>(
+        &self,
+    ) -> MatrixView<'_, Element, D::DoF, S::DoF, Const<1>, S::DoF>
+    where
+        S: Extract<D, I, M>,
+    {
+        let start = S::OFFSET.into().expect("states is not contiguous");
+
+        // # Safety:
+        //
+        // `<S as DoF>::DoF` implements DimName, which means `RStride` always equal to `Const<1>`,
+        // and `CStride` equal to `S::DoF`.
+        unsafe {
+            let data = ViewStorage::new_with_strides_unchecked(
+                &self.data,
+                (start, 0),
+                (D::DoF::name(), S::DoF::name()),
+                (Const::<1>, S::DoF::name()),
+            );
+            Matrix::from_data_statically_unchecked(data)
+        }
     }
 }
