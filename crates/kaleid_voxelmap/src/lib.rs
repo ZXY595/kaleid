@@ -63,7 +63,7 @@ where
             })
             .collect::<(DVector<Element>, Matrix6xX<Element>, DVector<Element>)>();
 
-        let cross_cov_tr = model.transpose() * self.rows::<PoseState, _, _>();
+        let cross_cov_tr = model.transpose() * self.rows::<PoseState>();
 
         let innovation_cov = model.transpose() * self.block::<PoseState, PoseState>() * model;
 
