@@ -1,9 +1,9 @@
-mod body_point;
+pub mod body_point;
 mod index;
 mod octotree;
 pub mod plane;
 pub mod residual;
-mod world_point;
+pub mod world_point;
 
 use nohash_hasher::IntMap;
 

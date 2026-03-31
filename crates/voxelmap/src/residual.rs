@@ -1,6 +1,6 @@
 use std::{cmp::Ordering, ops::Deref};
 
-use nalgebra::{IsometryMatrix3, Matrix3, Vector3};
+use nalgebra::{IsometryMatrix3, Vector3};
 
 use crate::{
     Config, Element, UncertainWorldPoint, VoxelMap, body_point::UncertainBodyPoint,
@@ -10,14 +10,9 @@ use crate::{
 pub struct Residual<'a> {
     pub plane: &'a UncertainPlane,
     pub distance_to_plane: Element,
-    sigma: Element,
+    distance_variance: Element,
     distance_to_plane_squared: Element,
-    sigma_sqrt: Element,
-}
-
-pub struct UncertainResidual<'a> {
-    pub residual: Residual<'a>,
-    pub covariance: Element,
+    distance_variance_sqrt: Element,
 }
 
 pub struct InvalidResidual<'a> {
@@ -78,17 +73,18 @@ where
                 range_distance <= radius_factor * plane.radius
             })
             .map(|(plane, distance_to_plane, distance_to_plane_squared)| {
-                let sigma = plane.sigma_to(point).to_scalar();
+                let distance_variance = plane.distance_variance(point).to_scalar();
                 Residual {
                     plane,
                     distance_to_plane,
                     distance_to_plane_squared,
-                    sigma_sqrt: sigma.sqrt(),
-                    sigma,
+                    distance_variance_sqrt: distance_variance.sqrt(),
+                    distance_variance,
                 }
             })
             .filter(|residual| {
-                residual.distance_to_plane.abs() < self.config.sigma_ratio() * residual.sigma_sqrt
+                residual.distance_to_plane.abs()
+                    < self.config.sigma_ratio() * residual.distance_variance_sqrt
             })
             .max_by(|a, b| {
                 a.probability()
@@ -110,33 +106,20 @@ impl<'a> Residual<'a> {
     }
 
     fn probability(&self) -> Element {
-        self.sigma_sqrt.recip() * (self.distance_to_plane_squared * -0.5 / self.sigma).exp()
+        self.distance_variance_sqrt.recip()
+            * (self.distance_to_plane_squared * -0.5 / self.distance_variance).exp()
     }
-}
 
-impl<'a> UncertainResidual<'a> {
-    pub fn new(
-        residual: Residual<'a>,
+    pub fn noise(
+        &self,
         body_point: &UncertainBodyPoint,
         body_to_world: &IsometryMatrix3<Element>,
-    ) -> Self {
-        let mut cov = Matrix3::zeros();
-        cov.quadform_tr(
-            1.0,
-            body_to_world.rotation.matrix(),
-            &body_point.covariance,
-            0.0,
-        );
-        let world_point = body_to_world * body_point.deref();
-
-        let cov = residual.plane.sigma_to(&UncertainWorldPoint {
-            point: world_point,
-            covariance: cov,
-        });
-
-        Self {
-            residual,
-            covariance: cov.to_scalar(),
-        }
+    ) -> Element {
+        self.plane
+            .distance_variance(&UncertainWorldPoint::new_no_state(
+                body_point,
+                body_to_world,
+            ))
+            .to_scalar()
     }
 }

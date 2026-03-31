@@ -38,7 +38,7 @@ impl ProcessCov {
 }
 
 impl UncertainBodyPoint {
-    pub fn new(point: Point3<Element>, process_cov: ProcessCov) -> Self {
+    pub fn new(point: Point3<Element>, process_cov: &ProcessCov) -> Self {
         let distance = point.coords.norm();
         let direction = point.coords.normalize();
 

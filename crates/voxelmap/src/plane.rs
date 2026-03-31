@@ -14,8 +14,8 @@ pub struct Plane {
 }
 
 pub struct UncertainPlane {
-    plane: Plane,
-    covariance: Matrix6<Element>,
+    pub plane: Plane,
+    pub covariance: Matrix6<Element>,
 }
 
 impl Deref for UncertainPlane {
@@ -135,17 +135,20 @@ impl UncertainPlane {
         })
     }
 
-    pub fn sigma_to(&self, world_point: &UncertainWorldPoint) -> Matrix1<Element> {
+    #[expect(clippy::toplevel_ref_arg)]
+    pub fn distance_variance(&self, world_point: &UncertainWorldPoint) -> Matrix1<Element> {
         let distance_error = world_point.point - self.plane.center;
-        let normal_error = -&self.plane.normal;
+        let normal_error = -self.plane.normal;
 
-        #[expect(clippy::toplevel_ref_arg)]
-        let error_matrix = stack![distance_error; normal_error];
-
-        let mut sigma = Matrix1::zeros();
-        sigma.quadform(1.0, &self.covariance, &error_matrix, 0.0);
-        sigma.quadform(1.0, &world_point.covariance, &self.plane.normal, 1.0);
-        sigma
+        let mut cov = Matrix1::zeros();
+        cov.quadform(
+            1.0,
+            &self.covariance,
+            &stack![distance_error; normal_error],
+            0.0,
+        );
+        cov.quadform(1.0, &world_point.covariance, &self.plane.normal, 1.0);
+        cov
     }
 }
 

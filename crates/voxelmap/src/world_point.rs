@@ -1,6 +1,7 @@
 use std::ops::Deref;
 
-use nalgebra::{IsometryMatrix3, Matrix, Matrix3, Point3, Storage, U3};
+use derive_deref::{Deref, DerefMut};
+use nalgebra::{IsometryMatrix3, Matrix, Matrix3, Point3, Rotation3, Storage, U3};
 
 use crate::{Element, body_point::UncertainBodyPoint};
 
@@ -17,35 +18,57 @@ impl Deref for UncertainWorldPoint {
     }
 }
 
+#[derive(Deref, DerefMut)]
+pub struct RotJocobian(Matrix3<Element>);
+
+impl RotJocobian {
+    pub fn new(imu_to_world: &Rotation3<Element>, imu_point: &Point3<Element>) -> Self {
+        Self(imu_to_world * imu_point.coords.cross_matrix())
+    }
+}
+
 impl UncertainWorldPoint {
     pub fn new(
         body_point: &UncertainBodyPoint,
-        imu_to_world: &IsometryMatrix3<Element>,
         body_to_world: &IsometryMatrix3<Element>,
-        cross_matrix_imu: &Matrix3<Element>,
-        rot_cov: Matrix<Element, U3, U3, impl Storage<Element, U3, U3>>,
+        rot_jocobian: &RotJocobian,
         trans_cov: Matrix<Element, U3, U3, impl Storage<Element, U3, U3>>,
+        rot_cov: Matrix<Element, U3, U3, impl Storage<Element, U3, U3>>,
     ) -> Self
 where {
-        let point = body_to_world * body_point.point;
+        let world_point = body_to_world * body_point.point;
 
         let mut cov = trans_cov.into_owned();
-
+        cov.quadform_tr(1.0, rot_jocobian, &rot_cov, 1.0);
         cov.quadform_tr(
             1.0,
             body_to_world.rotation.matrix(),
             &body_point.covariance,
             1.0,
         );
+
+        Self {
+            point: world_point,
+            covariance: cov,
+        }
+    }
+
+    pub fn new_no_state(
+        body_point: &UncertainBodyPoint,
+        body_to_world: &IsometryMatrix3<Element>,
+    ) -> Self {
+        let world_point = body_to_world * body_point.point;
+
+        let mut cov = Matrix3::zeros();
         cov.quadform_tr(
             1.0,
-            &(imu_to_world.rotation * cross_matrix_imu),
-            &rot_cov,
-            1.0,
+            body_to_world.rotation.matrix(),
+            &body_point.covariance,
+            0.0,
         );
 
         Self {
-            point,
+            point: world_point,
             covariance: cov,
         }
     }
