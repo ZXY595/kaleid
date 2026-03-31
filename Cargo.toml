@@ -10,11 +10,11 @@ members = ["crates/*"]
 edition = "2024"
 
 [workspace.dependencies]
+derive_deref = "1.1.1"
 extension-traits = "2.0"
 kaleid = { path = "." }
 log = "0.4"
-nalgebra = "0.34.1"
-derive_deref = "1.1.1"
+nalgebra = "0.34.2"
 
 [dependencies]
 derive_deref.workspace = true
