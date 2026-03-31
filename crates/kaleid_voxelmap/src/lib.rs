@@ -23,7 +23,7 @@ impl<S: ErrorState> Covariance<S>
 where
     DefaultAllocator: Allocator<S::DoF, S::DoF> + Allocator<S::DoF>,
 {
-    fn observe_points<I1, I2, I3>(
+    fn observe_points(
         &mut self,
         states: &mut S,
         voxel_map: &VoxelMap<impl voxelmap::Config>,

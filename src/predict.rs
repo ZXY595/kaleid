@@ -107,14 +107,3 @@ where
         self.0 = temp;
     }
 }
-
-// impl<S: DoF, T1, T2, I1, I2> BuildTransition<S, (I1, I2)> for (T1, T2)
-// where
-//     T1: BuildTransition<S, I1>,
-//     T2: BuildTransition<S, I2>,
-// {
-//     fn build_transition(transition: &mut TransitionViewMut<S>, states: &S, dt: Element) {
-//         T1::build_transition(transition, states, dt);
-//         T2::build_transition(transition, states, dt);
-//     }
-// }

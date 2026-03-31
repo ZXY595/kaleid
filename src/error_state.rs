@@ -122,14 +122,3 @@ where
             .fill_diagonal(dt);
     }
 }
-
-// impl<T1: ErrorState, T2: ErrorState> ErrorState for (T1, T2)
-// where
-//     Self: DoF,
-// {
-//     fn inject(&mut self, inj: Vector<Element, Self::DoF, impl Storage<Element, Self::DoF>>) {
-//         self.0.inject(inj.rows_generic(0, T1::DoF::name()));
-//         self.1
-//             .inject(inj.rows_generic(T1::DoF::DIM, T2::DoF::name()));
-//     }
-// }
