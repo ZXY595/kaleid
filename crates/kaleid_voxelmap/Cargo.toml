@@ -1,0 +1,10 @@
+[package]
+name = "kaleid_voxelmap"
+version = "0.1.0"
+edition.workspace = true
+
+[dependencies]
+extension-traits.workspace = true
+kaleid.workspace = true
+nalgebra.workspace = true
+voxelmap = { path = "../voxelmap" }
